@@ -1,0 +1,33 @@
+spring:
+  kafka:
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    bootstrap-servers: localhost:9092
+
+management:
+  endpoints:
+    web:
+      base-path: /management
+      exposure:
+        include:
+          [
+            "health",
+            "info",
+            "prometheus"
+          ]
+
+application:
+  kafka:
+    broker-uri: ${spring.kafka.bootstrap-servers}&groupId=ccs-api&autoOffsetReset=earliest
+    topic:
+      transaction-error-create: transaction.error.create
+      transaction-import: transaction.transaction.import
+      account-create: transaction.account.create
+      dead-letter-channel: dead-letter-channel
+  camel:
+    dead-letter-channel-route: kafka:${application.kafka.topic.dead-letter-channel}?brokers=${application.kafka.broker-uri}&valueSerializer=org.springframework.kafka.support.serializer.JsonSerializer
+    transaction-error-create-route: kafka:${application.kafka.topic.transaction-error-create}?brokers=${application.kafka.broker-uri}
+    transaction-import-route: kafka:${application.kafka.topic.transaction-import}?brokers=${application.kafka.broker-uri}
+    account-create-route: kafka:${application.kafka.topic.account-create}?brokers=${application.kafka.broker-uri}
